@@ -30,7 +30,9 @@ export default async function characterRoutes(fastify) {
       .eq('user_id', data.userId)
       .single();
 
-    if (existing) return reply.code(409).send({ error: 'Character already exists' });
+    if (existing) {
+      return { success: true, character: existing, message: 'Character already exists' };
+    }
 
     // Get clan info (for appearance overrides)
     const { data: clan } = await supabase
