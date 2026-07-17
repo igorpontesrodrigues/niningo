@@ -95,7 +95,8 @@ export default function CharacterCreate() {
 
   return (
     <div style={{
-      minHeight: '100vh',
+      height: '100%',
+      overflowY: 'auto',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       background: 'radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0,210,200,0.06) 0%, transparent 60%), #070912',
       padding: '20px',
