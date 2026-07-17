@@ -21,7 +21,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div data-village={village?.slug} style={{ minHeight: '100vh', background: 'var(--bg-900)', display: 'flex', flexDirection: 'column' }}>
+    <div data-village={village?.slug} style={{ height: '100%', background: 'var(--bg-900)', display: 'flex', flexDirection: 'column' }}>
 
       {/* Rested Bonus Banner */}
       {restedBonus && (
@@ -64,7 +64,7 @@ export default function Dashboard() {
       </header>
 
       {/* Main Content */}
-      <main style={{ flex: 1, padding: '24px 20px', maxWidth: 640, margin: '0 auto', width: '100%' }}>
+      <main style={{ flex: 1, padding: '24px 20px', maxWidth: 640, margin: '0 auto', width: '100%', overflowY: 'auto' }}>
 
         {/* Level + XP */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
