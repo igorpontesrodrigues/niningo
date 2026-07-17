@@ -58,42 +58,35 @@ export default function CharacterCreate() {
     if (!canProceed() || saving) return;
     setSaving(true);
 
-    // Get clan visual override
-    const clan = clans.find((c) => c.id === form.clanId);
-    const override = clan?.visual_override || {};
-    const appearance = {
-      hair_color: override.hairColor || form.hairColor,
-      eye_color: override.eyeColor || form.eyeColor,
-      skin_tone: form.skinTone,
-      outfit_id: 'default',
-    };
+    try {
+      const res = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/character/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          name: form.name.trim(),
+          villageId: form.villageId,
+          clanId: form.clanId,
+          chakraNature: form.chakraNature,
+          appearance: {
+            hairColor: form.hairColor,
+            eyeColor: form.eyeColor,
+            skinTone: form.skinTone,
+            outfitId: 'default',
+          },
+        }),
+      });
 
-    // Get starting location
-    const { data: startLoc } = await supabase
-      .from('locations').select('id')
-      .eq('village_id', form.villageId)
-      .eq('is_starting_location', true)
-      .single();
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Erro ao criar personagem');
+      }
 
-    // Create character
-    const { data: char, error } = await supabase.from('characters').insert({
-      user_id: user.id,
-      name: form.name.trim(),
-      village_id: form.villageId,
-      clan_id: form.clanId,
-      chakra_nature: form.chakraNature,
-      current_location_id: startLoc?.id,
-      level: 1, xp: 0, ryo: 100, rank: 'genin',
-    }).select().single();
-
-    if (!error && char) {
-      await supabase.from('character_stats').insert({ character_id: char.id, hp: 100, max_hp: 100, chakra: 50, max_chakra: 50, stamina: 20, max_stamina: 20, strength: 5, defense: 5, speed: 5, ninjutsu: 5, taijutsu: 5, genjutsu: 5 });
-      await supabase.from('character_appearance').insert({ character_id: char.id, ...appearance });
-      await supabase.from('character_online_status').insert({ character_id: char.id, is_online: true });
       await loadCharacter(user.id);
       navigate('/dashboard');
-    } else {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
+      alert('Falha ao criar personagem: ' + err.message);
       setSaving(false);
     }
   };
