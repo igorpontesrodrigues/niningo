@@ -32,7 +32,7 @@ export default function MapPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-900)', padding: '20px' }}>
+    <div style={{ height: '100%', overflowY: 'auto', background: 'var(--bg-900)', padding: '20px' }}>
       <div style={{ maxWidth: 640, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
           <Link to="/dashboard" style={{ color: 'var(--text-muted)', display: 'flex' }}><ArrowLeft size={20} /></Link>

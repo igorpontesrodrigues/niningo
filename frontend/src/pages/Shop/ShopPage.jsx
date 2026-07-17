@@ -4,9 +4,11 @@ import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
+import { useUIStore } from '../../store/uiStore';
 
 export default function ShopPage() {
   const { character } = useAuthStore();
+  const { showModal } = useUIStore();
   const [items, setItems] = useState([]);
 
   useEffect(() => {
@@ -17,7 +19,7 @@ export default function ShopPage() {
   }, [character]);
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-900)', padding: '20px' }}>
+    <div style={{ height: '100%', overflowY: 'auto', background: 'var(--bg-900)', padding: '20px' }}>
       <div style={{ maxWidth: 640, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
           <Link to="/dashboard" style={{ color: 'var(--text-muted)', display: 'flex' }}><ArrowLeft size={20} /></Link>
@@ -36,7 +38,7 @@ export default function ShopPage() {
               <div style={{ fontSize: '0.75rem', color: '#f59e0b', marginBottom: 10 }}>💰 {item.price} Ryō</div>
               <button className="btn btn-primary" style={{ fontSize: '0.78rem', padding: '7px 14px' }}
                 disabled={character?.ryo < item.price}
-                onClick={() => alert(`Comprando ${item.equipment?.name}...`)}>
+                onClick={() => showModal('Loja da Vila', `Comprando ${item.equipment?.name}...`, 'info')}>
                 Comprar
               </button>
             </motion.div>

@@ -4,9 +4,11 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Clock, Zap, Star } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
+import { useUIStore } from '../../store/uiStore';
 
 export default function MissionsPage() {
   const { character } = useAuthStore();
+  const { showModal } = useUIStore();
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -19,13 +21,13 @@ export default function MissionsPage() {
 
   const startMission = async (mission) => {
     const stats = character?.character_stats;
-    if (!stats || stats.stamina < mission.stamina_cost) { alert('Stamina insuficiente!'); return; }
+    if (!stats || stats.stamina < mission.stamina_cost) { showModal('Aviso', 'Stamina insuficiente!', 'error'); return; }
     // TODO: call mission API
-    alert(`Missão "${mission.name}" iniciada!`);
+    showModal('Sucesso', `Missão "${mission.name}" iniciada!`, 'success');
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-900)', padding: '20px' }}>
+    <div style={{ height: '100%', overflowY: 'auto', background: 'var(--bg-900)', padding: '20px' }}>
       <div style={{ maxWidth: 640, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
           <Link to="/dashboard" style={{ color: 'var(--text-muted)', display: 'flex' }}><ArrowLeft size={20} /></Link>

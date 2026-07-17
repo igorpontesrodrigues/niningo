@@ -16,6 +16,7 @@ import ShopPage from './pages/Shop/ShopPage';
 // Components
 import LoadingScreen from './components/ui/LoadingScreen';
 import ProtectedRoute from './components/ui/ProtectedRoute';
+import GlobalModal from './components/ui/GlobalModal';
 
 export default function App() {
   const { user, loading, setUser, setLoading, loadCharacter } = useAuthStore();
@@ -40,7 +41,9 @@ export default function App() {
   if (loading) return <LoadingScreen />;
 
   return (
-    <Routes>
+    <>
+      <GlobalModal />
+      <Routes>
       <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/dashboard" />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/create-character" element={
@@ -75,5 +78,6 @@ export default function App() {
       } />
       <Route path="*" element={<Navigate to={user ? '/dashboard' : '/login'} />} />
     </Routes>
+    </>
   );
 }

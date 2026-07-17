@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
+import { useUIStore } from '../../store/uiStore';
 
 const STEPS = ['Vila', 'Clã', 'Nome', 'Aparência', 'Chakra'];
 const CHAKRA_NATURES = [
@@ -16,6 +17,7 @@ const CHAKRA_NATURES = [
 export default function CharacterCreate() {
   const navigate = useNavigate();
   const { user, loadCharacter } = useAuthStore();
+  const { showModal } = useUIStore();
 
   const [step, setStep] = useState(0);
   const [villages, setVillages] = useState([]);
@@ -86,7 +88,7 @@ export default function CharacterCreate() {
       navigate('/dashboard');
     } catch (err) {
       console.error(err);
-      alert('Falha ao criar personagem: ' + err.message);
+      showModal('Erro na Criação', 'Falha ao criar personagem: ' + err.message, 'error');
       setSaving(false);
     }
   };
