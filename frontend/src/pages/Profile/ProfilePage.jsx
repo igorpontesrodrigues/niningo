@@ -1,10 +1,11 @@
+import { LogOut } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 
 const CHAKRA_LABELS = { fire: '🔥 Fogo', water: '🌊 Água', wind: '🌀 Vento', earth: '🪨 Terra', lightning: '⚡ Raio' };
 const RANK_LABELS = { genin: '忍 Genin', chunin: '中 Chunin', jonin: '上 Jonin', kage: '影 Kage' };
 
 export default function ProfilePage() {
-  const { character } = useAuthStore();
+  const { character, signOut } = useAuthStore();
   const stats = character?.character_stats;
 
   return (
@@ -59,6 +60,12 @@ export default function ProfilePage() {
                 <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent)' }}>{val || 0}</div>
               </div>
             ))}
+          </div>
+
+          <div style={{ marginTop: 24 }}>
+            <button onClick={signOut} className="btn-logout" style={{ width: '100%', padding: '14px', fontSize: '1rem' }}>
+              <LogOut size={20} /> <span>Sair da Conta</span>
+            </button>
           </div>
         </div>
       </div>

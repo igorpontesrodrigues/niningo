@@ -336,6 +336,12 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; }
 }
 
 /* RESPONSIVE LAYOUT */
+.grid-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 @media (min-width: 768px) {
   .sidebar {
     display: flex;
@@ -349,7 +355,7 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; }
   .grid-layout {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 16px;
+    gap: 24px;
   }
 }
 
