@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Map, Scroll, ShoppingBag, User, LogOut, Swords } from 'lucide-react';
+import { Map, Scroll, ShoppingBag, User, LogOut, Swords, Home } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useGameStore } from '../../store/gameStore';
 import StatBar from '../../components/ui/StatBar';
@@ -57,6 +57,9 @@ export default function Dashboard() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <span style={{ fontSize: '0.85rem', color: '#f59e0b', fontWeight: 600 }}>💰 {character?.ryo}</span>
+          <Link to="/" style={{ color: 'var(--text-muted)', display: 'flex' }}>
+            <Home size={20} />
+          </Link>
           <button onClick={signOut} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
             <LogOut size={18} />
           </button>

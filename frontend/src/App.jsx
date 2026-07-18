@@ -44,7 +44,7 @@ export default function App() {
     <>
       <GlobalModal />
       <Routes>
-      <Route path="/login" element={!user ? <LandingPage /> : <Navigate to="/dashboard" />} />
+      <Route path="/" element={<LandingPage />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/create-character" element={
         <ProtectedRoute>
@@ -66,17 +66,17 @@ export default function App() {
           <MissionsPage />
         </ProtectedRoute>
       } />
-      <Route path="/profile" element={
-        <ProtectedRoute requireCharacter>
-          <ProfilePage />
-        </ProtectedRoute>
-      } />
       <Route path="/shop" element={
         <ProtectedRoute requireCharacter>
           <ShopPage />
         </ProtectedRoute>
       } />
-      <Route path="*" element={<Navigate to={user ? '/dashboard' : '/login'} />} />
+      <Route path="/profile" element={
+        <ProtectedRoute requireCharacter>
+          <ProfilePage />
+        </ProtectedRoute>
+      } />
+      <Route path="*" element={<Navigate to="/" />} />
     </Routes>
     </>
   );
