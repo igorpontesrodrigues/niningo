@@ -38,6 +38,19 @@ export default async function missionRoutes(fastify) {
     return { missions: missions || [], activeMissions: activeMissions || [] };
   });
 
+  // Get active mission
+  fastify.get('/active/:characterId', async (request, reply) => {
+    const { characterId } = request.params;
+    const { data: activeMission } = await supabase
+      .from('character_missions')
+      .select('id, mission_id, status, started_at, completes_at, missions(name)')
+      .eq('character_id', characterId)
+      .eq('status', 'in_progress')
+      .single();
+    
+    return { activeMission: activeMission || null };
+  });
+
   // Start a mission
   fastify.post('/start', async (request, reply) => {
     const { characterId, missionId } = request.body;

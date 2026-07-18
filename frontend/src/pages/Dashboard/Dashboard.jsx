@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Map, Scroll, ShoppingBag, User, LogOut, Swords, Home } from 'lucide-react';
+import { Map, Scroll, ShoppingBag, User, LogOut, Swords, Home, Clock } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useGameStore } from '../../store/gameStore';
 import StatBar from '../../components/ui/StatBar';
@@ -12,6 +12,36 @@ export default function Dashboard() {
 
   const stats = character?.character_stats;
   const village = character?.villages;
+
+  const [activeMission, setActiveMission] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(0);
+
+  useEffect(() => {
+    if (!character?.id) return;
+    fetch(`${import.meta.env.VITE_SERVER_URL}/api/missions/active/${character.id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.activeMission) setActiveMission(data.activeMission);
+      })
+      .catch(err => console.error(err));
+  }, [character]);
+
+  useEffect(() => {
+    if (!activeMission) return;
+    const interval = setInterval(() => {
+      const remaining = new Date(activeMission.completes_at).getTime() - Date.now();
+      setTimeLeft(Math.max(0, remaining));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [activeMission]);
+
+  const formatTime = (ms) => {
+    if (ms <= 0) return '00:00';
+    const totalSeconds = Math.floor(ms / 1000);
+    const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+    const s = (totalSeconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
 
   const navItems = [
     { to: '/map',      icon: Map,         label: 'Mapa' },
@@ -65,6 +95,36 @@ export default function Dashboard() {
           </button>
         </div>
       </header>
+
+      {/* Active Mission Banner */}
+      {activeMission && (
+        <Link to="/missions" style={{ textDecoration: 'none' }}>
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{
+              margin: '12px 20px 0 20px',
+              padding: '12px 16px',
+              background: 'linear-gradient(90deg, rgba(168, 85, 247, 0.15), rgba(0, 210, 200, 0.15))',
+              border: '1px solid rgba(168, 85, 247, 0.3)',
+              borderRadius: 12,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              color: '#fff',
+            }}
+          >
+            <div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Missão em Andamento</div>
+              <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{activeMission.missions?.name || 'Missão'}</div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(0,0,0,0.3)', padding: '4px 10px', borderRadius: 8 }}>
+              <Clock size={14} color="#a855f7" />
+              <span style={{ fontFamily: 'monospace', fontWeight: 700, color: timeLeft === 0 ? '#10b981' : '#fff' }}>
+                {timeLeft === 0 ? 'Concluído!' : formatTime(timeLeft)}
+              </span>
+            </div>
+          </motion.div>
+        </Link>
+      )}
 
       {/* Main Content */}
       <main style={{ flex: 1, padding: '24px 20px', maxWidth: 640, margin: '0 auto', width: '100%', overflowY: 'auto' }}>
