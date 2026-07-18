@@ -19,6 +19,7 @@ export default function MissionsPage() {
   const [missions, setMissions] = useState([]);
   const [activeMission, setActiveMission] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
 
   const fetchMissions = async () => {
@@ -63,6 +64,7 @@ export default function MissionsPage() {
       return;
     }
 
+    setProcessing(true);
     try {
       const res = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/missions/start`, {
         method: 'POST',
@@ -77,11 +79,14 @@ export default function MissionsPage() {
       showModal('Missão Iniciada', `Retorne em ${mission.duration_minutes} minutos para coletar as recompensas!`, 'info');
     } catch (err) {
       showModal('Erro', err.message, 'error');
+    } finally {
+      setProcessing(false);
     }
   };
 
   const claimReward = async () => {
     if (!activeMission) return;
+    setProcessing(true);
     try {
       const res = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/missions/complete`, {
         method: 'POST',
@@ -96,6 +101,8 @@ export default function MissionsPage() {
       await loadCharacter(user.id); // update xp, ryo, level
     } catch (err) {
       showModal('Erro', err.message, 'error');
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -122,11 +129,11 @@ export default function MissionsPage() {
               </div>
               <button 
                 className="btn btn-primary"
-                disabled={timeLeft > 0}
+                disabled={timeLeft > 0 || processing}
                 onClick={claimReward}
-                style={{ padding: '10px 20px', opacity: timeLeft > 0 ? 0.5 : 1 }}
+                style={{ padding: '10px 20px', opacity: (timeLeft > 0 || processing) ? 0.5 : 1 }}
               >
-                {timeLeft > 0 ? 'Em Missão...' : 'Resgatar'}
+                {timeLeft > 0 ? 'Em Missão...' : (processing ? 'Aguarde...' : 'Resgatar')}
               </button>
             </div>
           </motion.div>
@@ -166,9 +173,9 @@ export default function MissionsPage() {
                   onClick={() => startMission(m)} 
                   className="btn btn-primary" 
                   style={{ width: '100%', fontSize: '0.82rem', padding: '8px' }}
-                  disabled={!!activeMission}
+                  disabled={!!activeMission || processing}
                 >
-                  Aceitar Missão
+                  {processing ? 'Aguarde...' : 'Aceitar Missão'}
                 </button>
               </motion.div>
             ))}

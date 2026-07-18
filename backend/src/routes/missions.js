@@ -55,6 +55,18 @@ export default async function missionRoutes(fastify) {
   fastify.post('/start', async (request, reply) => {
     const { characterId, missionId } = request.body;
 
+    // Race condition protection: Check if user already has an active mission
+    const { data: existingActive } = await supabase
+      .from('character_missions')
+      .select('id')
+      .eq('character_id', characterId)
+      .eq('status', 'in_progress')
+      .single();
+
+    if (existingActive) {
+      return reply.code(400).send({ error: 'Você já tem uma missão em andamento.' });
+    }
+
     // Get mission info
     const { data: mission } = await supabase
       .from('missions')
