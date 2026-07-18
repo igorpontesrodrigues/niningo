@@ -13,14 +13,20 @@ export default async function missionRoutes(fastify) {
 
     if (!character) return reply.code(404).send({ error: 'Character not found' });
 
-    const rankOrder = ['genin', 'chunin', 'jonin', 'kage'];
-    const maxRankIndex = rankOrder.indexOf(character.rank);
+    const rankToMissions = {
+      'genin': ['d', 'c'],
+      'chunin': ['c', 'b'],
+      'jonin': ['b', 'a', 's'],
+      'kage': ['a', 's']
+    };
+    
+    const allowedRanks = rankToMissions[character.rank] || ['d'];
 
     const { data: missions } = await supabase
       .from('missions')
       .select('*')
       .eq('location_id', character.current_location_id)
-      .in('rank', rankOrder.slice(0, maxRankIndex + 1));
+      .in('rank', allowedRanks);
 
     // Get active missions for this character
     const { data: activeMissions } = await supabase
