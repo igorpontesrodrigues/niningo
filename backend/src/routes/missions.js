@@ -67,6 +67,18 @@ export default async function missionRoutes(fastify) {
       return reply.code(400).send({ error: 'Você já tem uma missão em andamento.' });
     }
 
+    // Check no active travel
+    const { data: activeTravel } = await supabase
+      .from('travel_logs')
+      .select('id')
+      .eq('character_id', characterId)
+      .eq('status', 'traveling')
+      .single();
+
+    if (activeTravel) {
+      return reply.code(400).send({ error: 'Você está viajando e não pode fazer missões.' });
+    }
+
     // Get mission info
     const { data: mission } = await supabase
       .from('missions')

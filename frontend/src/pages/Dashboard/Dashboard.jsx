@@ -14,14 +14,26 @@ export default function Dashboard() {
   const village = character?.villages;
 
   const [activeMission, setActiveMission] = useState(null);
-  const [timeLeft, setTimeLeft] = useState(0);
+  const [activeTravel, setActiveTravel] = useState(null);
+  const [missionTimeLeft, setMissionTimeLeft] = useState(0);
+  const [travelTimeLeft, setTravelTimeLeft] = useState(0);
 
   useEffect(() => {
     if (!character?.id) return;
+    
+    // Fetch active mission
     fetch(`${import.meta.env.VITE_SERVER_URL}/api/missions/active/${character.id}`)
       .then(res => res.json())
       .then(data => {
         if (data.activeMission) setActiveMission(data.activeMission);
+      })
+      .catch(err => console.error(err));
+
+    // Fetch active travel
+    fetch(`${import.meta.env.VITE_SERVER_URL}/api/travel/status/${character.id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.travel) setActiveTravel(data.travel);
       })
       .catch(err => console.error(err));
   }, [character]);
@@ -30,10 +42,19 @@ export default function Dashboard() {
     if (!activeMission) return;
     const interval = setInterval(() => {
       const remaining = new Date(activeMission.completes_at).getTime() - Date.now();
-      setTimeLeft(Math.max(0, remaining));
+      setMissionTimeLeft(Math.max(0, remaining));
     }, 1000);
     return () => clearInterval(interval);
   }, [activeMission]);
+
+  useEffect(() => {
+    if (!activeTravel) return;
+    const interval = setInterval(() => {
+      const remaining = new Date(activeTravel.arrives_at).getTime() - Date.now();
+      setTravelTimeLeft(Math.max(0, remaining));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [activeTravel]);
 
   const formatTime = (ms) => {
     if (ms <= 0) return '00:00';
@@ -118,8 +139,38 @@ export default function Dashboard() {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(0,0,0,0.3)', padding: '4px 10px', borderRadius: 8 }}>
               <Clock size={14} color="#a855f7" />
-              <span style={{ fontFamily: 'monospace', fontWeight: 700, color: timeLeft === 0 ? '#10b981' : '#fff' }}>
-                {timeLeft === 0 ? 'Concluído!' : formatTime(timeLeft)}
+              <span style={{ fontFamily: 'monospace', fontWeight: 700, color: missionTimeLeft === 0 ? '#10b981' : '#fff' }}>
+                {missionTimeLeft === 0 ? 'Concluído!' : formatTime(missionTimeLeft)}
+              </span>
+            </div>
+          </motion.div>
+        </Link>
+      )}
+
+      {/* Active Travel Banner */}
+      {activeTravel && (
+        <Link to="/map" style={{ textDecoration: 'none' }}>
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{
+              margin: '12px 20px 0 20px',
+              padding: '12px 16px',
+              background: 'linear-gradient(90deg, rgba(59, 130, 246, 0.15), rgba(0, 210, 200, 0.15))',
+              border: '1px solid rgba(59, 130, 246, 0.3)',
+              borderRadius: 12,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              color: '#fff',
+            }}
+          >
+            <div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Viajando para</div>
+              <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{activeTravel.to_location?.name || 'Destino'}</div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(0,0,0,0.3)', padding: '4px 10px', borderRadius: 8 }}>
+              <Clock size={14} color="#3b82f6" />
+              <span style={{ fontFamily: 'monospace', fontWeight: 700, color: travelTimeLeft === 0 ? '#10b981' : '#fff' }}>
+                {travelTimeLeft === 0 ? 'Chegou!' : formatTime(travelTimeLeft)}
               </span>
             </div>
           </motion.div>

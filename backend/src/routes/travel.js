@@ -25,6 +25,16 @@ export default async function travelRoutes(fastify) {
 
     if (activeTravel) return reply.code(400).send({ error: 'Already traveling' });
 
+    // Check no active mission
+    const { data: activeMission } = await supabase
+      .from('character_missions')
+      .select('id')
+      .eq('character_id', characterId)
+      .eq('status', 'in_progress')
+      .single();
+
+    if (activeMission) return reply.code(400).send({ error: 'Você está em uma missão e não pode viajar.' });
+
     const { data: character } = await supabase
       .from('characters')
       .select('current_location_id')
@@ -70,5 +80,37 @@ export default async function travelRoutes(fastify) {
       .single();
 
     return { travel: travel || null };
+  });
+
+  // Complete travel
+  fastify.post('/arrive', async (request, reply) => {
+    const { characterId, travelId } = request.body;
+
+    const { data: travel } = await supabase
+      .from('travel_logs')
+      .select('*')
+      .eq('id', travelId)
+      .eq('character_id', characterId)
+      .single();
+
+    if (!travel) return reply.code(404).send({ error: 'Travel not found' });
+    if (travel.status !== 'traveling') return reply.code(400).send({ error: 'Travel not in progress' });
+    if (new Date() < new Date(travel.arrives_at)) {
+      return reply.code(400).send({ error: 'Travel not completed yet' });
+    }
+
+    // Update travel status
+    await supabase
+      .from('travel_logs')
+      .update({ status: 'arrived' })
+      .eq('id', travelId);
+
+    // Update character location
+    await supabase
+      .from('characters')
+      .update({ current_location_id: travel.to_location_id })
+      .eq('id', characterId);
+
+    return { success: true };
   });
 }
