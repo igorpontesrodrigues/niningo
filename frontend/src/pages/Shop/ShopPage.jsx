@@ -6,9 +6,10 @@ import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
 
 export default function ShopPage() {
-  const { character } = useAuthStore();
+  const { user, character, loadCharacter } = useAuthStore();
   const { showModal } = useUIStore();
   const [items, setItems] = useState([]);
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     if (!character?.village_id) return;
@@ -16,6 +17,27 @@ export default function ShopPage() {
       .eq('village_id', character.village_id)
       .then(({ data }) => setItems(data || []));
   }, [character]);
+
+  const handleBuy = async (item) => {
+    if (character.ryo < item.price) return;
+    setProcessing(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/shop/buy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ characterId: character.id, shopItemId: item.id }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      showModal('Compra Realizada', `Você comprou ${item.equipment?.name} com sucesso!`, 'success');
+      await loadCharacter(user.id);
+    } catch (err) {
+      showModal('Erro na Compra', err.message, 'error');
+    } finally {
+      setProcessing(false);
+    }
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -37,9 +59,9 @@ export default function ShopPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ fontSize: '0.85rem', color: '#f59e0b', fontWeight: 600 }}>💰 {item.price} Ryō</div>
               <button className="btn btn-primary" style={{ fontSize: '0.78rem', padding: '7px 14px' }}
-                disabled={character?.ryo < item.price}
-                onClick={() => showModal('Loja da Vila', `Comprando ${item.equipment?.name}... (Em breve)`, 'info')}>
-                Comprar
+                disabled={character?.ryo < item.price || processing}
+                onClick={() => handleBuy(item)}>
+                {processing ? '...' : 'Comprar'}
               </button>
             </div>
           </motion.div>

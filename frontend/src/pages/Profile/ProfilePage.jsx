@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { LogOut } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 
@@ -7,6 +8,32 @@ const RANK_LABELS = { genin: '忍 Genin', chunin: '中 Chunin', jonin: '上 Joni
 export default function ProfilePage() {
   const { character, signOut } = useAuthStore();
   const stats = character?.character_stats;
+  
+  const [inventory, setInventory] = useState([]);
+  
+  useEffect(() => {
+    if (!character?.id) return;
+    fetch(`${import.meta.env.VITE_SERVER_URL}/api/character/inventory/${character.id}`)
+      .then(res => res.json())
+      .then(data => setInventory(data.inventory || []))
+      .catch(console.error);
+  }, [character]);
+
+  // Compute stat bonuses from equipped items
+  const bonuses = {
+    strength: 0, defense: 0, speed: 0,
+    ninjutsu: 0, taijutsu: 0, genjutsu: 0,
+  };
+
+  inventory.filter(i => i.equipped).forEach(item => {
+    if (item.equipment?.stats) {
+      Object.entries(item.equipment.stats).forEach(([stat, value]) => {
+        if (bonuses[stat] !== undefined) {
+          bonuses[stat] += value;
+        }
+      });
+    }
+  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -52,14 +79,24 @@ export default function ProfilePage() {
         <div className="glass" style={{ borderRadius: 14, padding: 24, height: 'fit-content' }}>
           <h3 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.1rem', marginBottom: 20, color: 'var(--text-secondary)' }}>Atributos de Combate</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12 }}>
-            {[['Força', stats?.strength], ['Defesa', stats?.defense], ['Velocidade', stats?.speed],
-              ['Ninjutsu', stats?.ninjutsu], ['Taijutsu', stats?.taijutsu], ['Genjutsu', stats?.genjutsu]
-            ].map(([label, val]) => (
-              <div key={label} style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: 12, border: '1px solid var(--border)' }}>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent)' }}>{val || 0}</div>
-              </div>
-            ))}
+            {[['Força', 'strength'], ['Defesa', 'defense'], ['Velocidade', 'speed'],
+              ['Ninjutsu', 'ninjutsu'], ['Taijutsu', 'taijutsu'], ['Genjutsu', 'genjutsu']
+            ].map(([label, key]) => {
+              const base = stats?.[key] || 0;
+              const bonus = bonuses[key] || 0;
+              
+              return (
+                <div key={label} style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: 12, border: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                    <span style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent)' }}>{base}</span>
+                    {bonus > 0 && (
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#10b981' }}>(+{bonus})</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           <div style={{ marginTop: 24 }}>

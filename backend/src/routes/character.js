@@ -127,4 +127,65 @@ export default async function characterRoutes(fastify) {
     if (error) return reply.code(404).send({ error: 'Character not found' });
     return character;
   });
+
+  // Get character inventory
+  fastify.get('/inventory/:characterId', async (request, reply) => {
+    const { characterId } = request.params;
+    
+    const { data: inventory, error } = await supabase
+      .from('character_inventory')
+      .select('*, equipment(*)')
+      .eq('character_id', characterId);
+
+    if (error) return reply.code(500).send({ error: error.message });
+    return { inventory: inventory || [] };
+  });
+
+  // Equip / Unequip an item
+  fastify.post('/equip', async (request, reply) => {
+    const { characterId, inventoryId, equip } = request.body; // equip is boolean
+
+    const { data: item } = await supabase
+      .from('character_inventory')
+      .select('*, equipment(*)')
+      .eq('id', inventoryId)
+      .eq('character_id', characterId)
+      .single();
+
+    if (!item) return reply.code(404).send({ error: 'Item not found in inventory' });
+
+    // If equipping, we should check if another item of the same type is already equipped and unequip it
+    if (equip) {
+      const type = item.equipment.type;
+      
+      // Find currently equipped item of the same type
+      const { data: equippedItems } = await supabase
+        .from('character_inventory')
+        .select('id, equipment!inner(type)')
+        .eq('character_id', characterId)
+        .eq('equipped', true)
+        .eq('equipment.type', type);
+
+      // Unequip them
+      if (equippedItems && equippedItems.length > 0) {
+        for (const eqItem of equippedItems) {
+          await supabase
+            .from('character_inventory')
+            .update({ equipped: false })
+            .eq('id', eqItem.id);
+        }
+      }
+    }
+
+    // Toggle the target item
+    const { data: updatedItem, error } = await supabase
+      .from('character_inventory')
+      .update({ equipped: equip })
+      .eq('id', inventoryId)
+      .select()
+      .single();
+
+    if (error) return reply.code(500).send({ error: error.message });
+    return { success: true, item: updatedItem };
+  });
 }

@@ -12,6 +12,7 @@ import MapPage from './pages/Map/MapPage';
 import MissionsPage from './pages/Missions/MissionsPage';
 import ProfilePage from './pages/Profile/ProfilePage';
 import ShopPage from './pages/Shop/ShopPage';
+import InventoryPage from './pages/Inventory/InventoryPage';
 
 // Components
 import LoadingScreen from './components/ui/LoadingScreen';
@@ -63,6 +64,7 @@ export default function App() {
           <Route path="/map" element={<MapPage />} />
           <Route path="/missions" element={<MissionsPage />} />
           <Route path="/shop" element={<ShopPage />} />
+          <Route path="/inventory" element={<InventoryPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
 

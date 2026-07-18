@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { Map, Scroll, ShoppingBag, User, LogOut, LayoutDashboard, Clock } from 'lucide-react';
+import { Map, Scroll, ShoppingBag, User, LogOut, LayoutDashboard, Clock, Backpack } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
 
@@ -78,6 +78,7 @@ export default function MainLayout({ children }) {
     { to: '/dashboard', icon: LayoutDashboard, label: 'Início' },
     { to: '/map',       icon: Map,             label: 'Mapa' },
     { to: '/missions',  icon: Scroll,          label: 'Missões' },
+    { to: '/inventory', icon: Backpack,        label: 'Mochila' },
     { to: '/shop',      icon: ShoppingBag,     label: 'Loja' },
     { to: '/profile',   icon: User,            label: 'Perfil' },
   ];
