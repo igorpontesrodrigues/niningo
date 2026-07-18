@@ -25,7 +25,7 @@ export default async function missionRoutes(fastify) {
     // Get active missions for this character
     const { data: activeMissions } = await supabase
       .from('character_missions')
-      .select('mission_id, status, started_at, completes_at')
+      .select('id, mission_id, status, started_at, completes_at')
       .eq('character_id', characterId)
       .eq('status', 'in_progress');
 

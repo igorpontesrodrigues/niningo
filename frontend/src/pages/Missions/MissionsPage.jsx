@@ -2,33 +2,106 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Clock, Zap, Star } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
 
+function formatTime(ms) {
+  if (ms <= 0) return '00:00';
+  const totalSeconds = Math.floor(ms / 1000);
+  const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+  const s = (totalSeconds % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+}
+
 export default function MissionsPage() {
-  const { character } = useAuthStore();
+  const { user, character, loadCharacter } = useAuthStore();
   const { showModal } = useUIStore();
   const [missions, setMissions] = useState([]);
+  const [activeMission, setActiveMission] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [timeLeft, setTimeLeft] = useState(0);
+
+  const fetchMissions = async () => {
+    if (!character?.id) return;
+    try {
+      const res = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/missions/available/${character.id}`);
+      const data = await res.json();
+      setMissions(data.missions || []);
+      if (data.activeMissions && data.activeMissions.length > 0) {
+        setActiveMission(data.activeMissions[0]);
+      } else {
+        setActiveMission(null);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (!character?.current_location_id) return;
-    supabase.from('missions').select('*')
-      .eq('location_id', character.current_location_id)
-      .then(({ data }) => { setMissions(data || []); setLoading(false); });
+    fetchMissions();
   }, [character]);
+
+  useEffect(() => {
+    if (!activeMission || activeMission.status !== 'in_progress') return;
+    const interval = setInterval(() => {
+      const remaining = new Date(activeMission.completes_at).getTime() - Date.now();
+      setTimeLeft(Math.max(0, remaining));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [activeMission]);
 
   const startMission = async (mission) => {
     const stats = character?.character_stats;
-    if (!stats || stats.stamina < mission.stamina_cost) { showModal('Aviso', 'Stamina insuficiente!', 'error'); return; }
-    // TODO: call mission API
-    showModal('Sucesso', `Missão "${mission.name}" iniciada!`, 'success');
+    if (!stats || stats.stamina < mission.stamina_cost) {
+      showModal('Aviso', 'Stamina insuficiente!', 'error');
+      return;
+    }
+    if (activeMission) {
+      showModal('Aviso', 'Você já tem uma missão em andamento!', 'error');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/missions/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ characterId: character.id, missionId: mission.id }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      
+      setActiveMission(data.charMission);
+      await loadCharacter(user.id); // update stamina
+      showModal('Missão Iniciada', `Retorne em ${mission.duration_minutes} minutos para coletar as recompensas!`, 'info');
+    } catch (err) {
+      showModal('Erro', err.message, 'error');
+    }
+  };
+
+  const claimReward = async () => {
+    if (!activeMission) return;
+    try {
+      const res = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/missions/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ characterId: character.id, charMissionId: activeMission.id }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      showModal('Missão Concluída!', `Você ganhou ${data.rewards.xp} XP e ${data.rewards.ryo} Ryō.`, 'success');
+      setActiveMission(null);
+      await loadCharacter(user.id); // update xp, ryo, level
+    } catch (err) {
+      showModal('Erro', err.message, 'error');
+    }
   };
 
   return (
     <div style={{ height: '100%', overflowY: 'auto', background: 'var(--bg-900)', padding: '20px' }}>
-      <div style={{ maxWidth: 640, margin: '0 auto' }}>
+      <div style={{ maxWidth: 640, margin: '0 auto', paddingBottom: 60 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
           <Link to="/dashboard" style={{ color: 'var(--text-muted)', display: 'flex' }}><ArrowLeft size={20} /></Link>
           <div>
@@ -37,15 +110,38 @@ export default function MissionsPage() {
           </div>
         </div>
 
+        {activeMission && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+            className="glass glow" style={{ borderRadius: 16, padding: 20, marginBottom: 24, border: '1px solid rgba(0,210,200,0.4)' }}>
+            <h3 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.1rem', marginBottom: 8, color: 'var(--accent)' }}>
+              Missão em Andamento
+            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '2rem', fontWeight: 700, fontFamily: 'monospace' }}>
+                {formatTime(timeLeft)}
+              </div>
+              <button 
+                className="btn btn-primary"
+                disabled={timeLeft > 0}
+                onClick={claimReward}
+                style={{ padding: '10px 20px', opacity: timeLeft > 0 ? 0.5 : 1 }}
+              >
+                {timeLeft > 0 ? 'Em Missão...' : 'Resgatar'}
+              </button>
+            </div>
+          </motion.div>
+        )}
+
         {loading ? (
-          <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: 40 }}>Carregando missões...</p>
+          <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: 40 }}>Procurando pergaminhos...</p>
         ) : missions.length === 0 ? (
-          <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: 40 }}>Nenhuma missão disponível aqui.</p>
+          <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: 40 }}>Nenhuma missão disponível no seu rank.</p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <h3 style={{ fontFamily: 'Cinzel, serif', fontSize: '1rem', color: 'var(--text-secondary)' }}>Mural de Missões</h3>
             {missions.map((m) => (
               <motion.div key={m.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-                className="glass" style={{ borderRadius: 12, padding: 18 }}>
+                className="glass" style={{ borderRadius: 12, padding: 18, opacity: activeMission ? 0.5 : 1 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                   <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>{m.name}</span>
                   <span style={{ fontSize: '0.72rem', padding: '2px 8px', borderRadius: 100,
@@ -54,20 +150,25 @@ export default function MissionsPage() {
                   </span>
                 </div>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: 12, lineHeight: 1.5 }}>{m.description}</p>
-                <div style={{ display: 'flex', gap: 14, marginBottom: 12 }}>
+                <div style={{ display: 'flex', gap: 14, marginBottom: 16 }}>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Zap size={12} /> {m.stamina_cost} Stamina
+                    <Zap size={12} color="#facc15" /> {m.stamina_cost}
                   </span>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Clock size={12} /> {m.duration_minutes}min
+                    <Clock size={12} /> {m.duration_minutes}m
                   </span>
                   <span style={{ fontSize: '0.75rem', color: '#a855f7', display: 'flex', alignItems: 'center', gap: 4 }}>
                     <Star size={12} /> {m.xp_reward} XP
                   </span>
-                  <span style={{ fontSize: '0.75rem', color: '#f59e0b' }}>💰 {m.ryo_reward} Ryō</span>
+                  <span style={{ fontSize: '0.75rem', color: '#f59e0b' }}>💰 {m.ryo_reward}</span>
                 </div>
-                <button onClick={() => startMission(m)} className="btn btn-primary" style={{ fontSize: '0.82rem', padding: '8px 18px' }}>
-                  Iniciar Missão
+                <button 
+                  onClick={() => startMission(m)} 
+                  className="btn btn-primary" 
+                  style={{ width: '100%', fontSize: '0.82rem', padding: '8px' }}
+                  disabled={!!activeMission}
+                >
+                  Aceitar Missão
                 </button>
               </motion.div>
             ))}
