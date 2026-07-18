@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, ShoppingBag } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
@@ -19,31 +18,32 @@ export default function ShopPage() {
   }, [character]);
 
   return (
-    <div style={{ height: '100%', overflowY: 'auto', background: 'var(--bg-900)', padding: '20px' }}>
-      <div style={{ maxWidth: 640, margin: '0 auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-          <Link to="/dashboard" style={{ color: 'var(--text-muted)', display: 'flex' }}><ArrowLeft size={20} /></Link>
-          <div>
-            <h1 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.3rem' }}>Loja da Vila</h1>
-            <p style={{ fontSize: '0.78rem', color: '#f59e0b' }}>💰 {character?.ryo} Ryō disponível</p>
-          </div>
-        </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div>
+        <h1 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.4rem', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <ShoppingBag size={24} color="var(--accent)" />
+          Loja da Vila
+        </h1>
+        <p style={{ color: 'var(--text-muted)' }}>Você tem <strong style={{ color: '#f59e0b' }}>{character?.ryo} Ryō</strong> disponível.</p>
+      </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          {items.map((item) => (
-            <motion.div key={item.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-              className="glass" style={{ borderRadius: 12, padding: 14 }}>
-              <div style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 4 }}>{item.equipment?.name}</div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: 8, lineHeight: 1.4 }}>{item.equipment?.description}</div>
-              <div style={{ fontSize: '0.75rem', color: '#f59e0b', marginBottom: 10 }}>💰 {item.price} Ryō</div>
+      <div className="grid-layout">
+        {items.map((item) => (
+          <motion.div key={item.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+            className="glass" style={{ borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 4 }}>{item.equipment?.name}</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 12, flex: 1, lineHeight: 1.4 }}>{item.equipment?.description}</div>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '0.85rem', color: '#f59e0b', fontWeight: 600 }}>💰 {item.price} Ryō</div>
               <button className="btn btn-primary" style={{ fontSize: '0.78rem', padding: '7px 14px' }}
                 disabled={character?.ryo < item.price}
-                onClick={() => showModal('Loja da Vila', `Comprando ${item.equipment?.name}...`, 'info')}>
+                onClick={() => showModal('Loja da Vila', `Comprando ${item.equipment?.name}... (Em breve)`, 'info')}>
                 Comprar
               </button>
-            </motion.div>
-          ))}
-        </div>
+            </div>
+          </motion.div>
+        ))}
       </div>
     </div>
   );

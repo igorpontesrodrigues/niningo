@@ -17,6 +17,7 @@ import ShopPage from './pages/Shop/ShopPage';
 import LoadingScreen from './components/ui/LoadingScreen';
 import ProtectedRoute from './components/ui/ProtectedRoute';
 import GlobalModal from './components/ui/GlobalModal';
+import MainLayout from './components/layout/MainLayout';
 
 export default function App() {
   const { user, loading, setUser, setLoading, loadCharacter } = useAuthStore();
@@ -44,40 +45,29 @@ export default function App() {
     <>
       <GlobalModal />
       <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/auth/callback" element={<AuthCallback />} />
-      <Route path="/create-character" element={
-        <ProtectedRoute>
-          <CharacterCreate />
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard" element={
-        <ProtectedRoute requireCharacter>
-          <Dashboard />
-        </ProtectedRoute>
-      } />
-      <Route path="/map" element={
-        <ProtectedRoute requireCharacter>
-          <MapPage />
-        </ProtectedRoute>
-      } />
-      <Route path="/missions" element={
-        <ProtectedRoute requireCharacter>
-          <MissionsPage />
-        </ProtectedRoute>
-      } />
-      <Route path="/shop" element={
-        <ProtectedRoute requireCharacter>
-          <ShopPage />
-        </ProtectedRoute>
-      } />
-      <Route path="/profile" element={
-        <ProtectedRoute requireCharacter>
-          <ProfilePage />
-        </ProtectedRoute>
-      } />
-      <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/create-character" element={
+          <ProtectedRoute>
+            <CharacterCreate />
+          </ProtectedRoute>
+        } />
+
+        {/* Main App Routes with Global Layout */}
+        <Route element={
+          <ProtectedRoute requireCharacter>
+            <MainLayout />
+          </ProtectedRoute>
+        }>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/map" element={<MapPage />} />
+          <Route path="/missions" element={<MissionsPage />} />
+          <Route path="/shop" element={<ShopPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+        </Route>
+
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
     </>
   );
 }

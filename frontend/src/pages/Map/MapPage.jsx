@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Shield, Zap, Wind, MapPin, Navigation } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Shield, Zap, Wind, MapPin, Navigation } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
@@ -107,100 +106,98 @@ export default function MapPage() {
   };
 
   return (
-    <div style={{ height: '100%', overflowY: 'auto', background: 'var(--bg-900)', padding: '20px' }}>
-      <div style={{ maxWidth: 640, margin: '0 auto', paddingBottom: 60 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-          <Link to="/dashboard" style={{ color: 'var(--text-muted)', display: 'flex' }}><ArrowLeft size={20} /></Link>
-          <h1 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.3rem' }}>Mapa do Mundo</h1>
-        </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div>
+        <h1 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.4rem', marginBottom: 8 }}>Mapa do Mundo</h1>
+        <p style={{ color: 'var(--text-muted)' }}>Explore as regiões e viaje para outras vilas.</p>
+      </div>
 
-        {activeTravel && (
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-            className="glass glow" style={{ borderRadius: 16, padding: 20, marginBottom: 24, border: '1px solid rgba(168, 85, 247, 0.4)' }}>
-            <h3 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.1rem', marginBottom: 8, color: 'var(--accent)' }}>
-              Viagem em Andamento
-            </h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: 16 }}>
-              Destino: <strong>{activeTravel.to_location?.name}</strong>
-            </p>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: '2rem', fontWeight: 700, fontFamily: 'monospace' }}>
-                {formatTime(timeLeft)}
-              </div>
-              <button 
-                className="btn btn-primary"
-                disabled={timeLeft > 0 || processing}
-                onClick={handleArrive}
-                style={{ padding: '10px 20px', opacity: (timeLeft > 0 || processing) ? 0.5 : 1 }}
-              >
-                {timeLeft > 0 ? 'Viajando...' : (processing ? 'Aguarde...' : 'Desembarcar')}
-              </button>
+      {activeTravel && (
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+          className="glass glow" style={{ borderRadius: 16, padding: 20, border: '1px solid rgba(59, 130, 246, 0.4)' }}>
+          <h3 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.1rem', marginBottom: 8, color: 'var(--accent)' }}>
+            Viagem em Andamento
+          </h3>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: 16 }}>
+            Destino: <strong>{activeTravel.to_location?.name}</strong>
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ fontSize: '2rem', fontWeight: 700, fontFamily: 'monospace' }}>
+              {formatTime(timeLeft)}
             </div>
-          </motion.div>
-        )}
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
-          {locations.map((loc) => {
-            const isCurrent = loc.id === character?.current_location_id;
-            const isSelected = selected?.id === loc.id;
-            return (
-              <motion.button key={loc.id}
-                whileTap={{ scale: 0.98 }}
-                disabled={isCurrent || !!activeTravel}
-                onClick={() => !isCurrent && setSelected(loc)}
-                style={{
-                  padding: '16px', borderRadius: 12, textAlign: 'left', 
-                  cursor: (isCurrent || !!activeTravel) ? 'default' : 'pointer',
-                  background: isCurrent ? 'rgba(0,210,200,0.1)' : isSelected ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.03)',
-                  border: `2px solid ${isCurrent ? 'rgba(0,210,200,0.4)' : isSelected ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.06)'}`,
-                  width: '100%', color: 'var(--text-primary)',
-                  transition: 'all 0.2s ease',
-                  opacity: (activeTravel && !isCurrent) ? 0.4 : 1,
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontWeight: 600, fontFamily: 'Cinzel, serif', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <MapPin size={14} color={isCurrent ? "var(--accent)" : "var(--text-muted)"} />
-                    {loc.name}
-                  </span>
-                  {isCurrent && <span style={{ fontSize: '0.72rem', color: 'var(--accent)' }}>● Sua Posição</span>}
-                </div>
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.5, marginLeft: 20 }}>{loc.description}</div>
-              </motion.button>
-            );
-          })}
-        </div>
-
-        {selected && selected.id !== character?.current_location_id && !activeTravel && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-            className="glass" style={{ borderRadius: 14, padding: 20 }}>
-            <div style={{ marginBottom: 14, fontFamily: 'Cinzel, serif', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Navigation size={16} /> Viajar para {selected.name}
-            </div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-              {TRAVEL_MODES.map((m) => {
-                const Icon = m.icon;
-                return (
-                  <button key={m.id} onClick={() => setTravelMode(m.id)} style={{
-                    flex: 1, padding: '10px 6px', borderRadius: 10, cursor: 'pointer',
-                    border: `2px solid ${travelMode === m.id ? m.color : 'rgba(255,255,255,0.08)'}`,
-                    background: travelMode === m.id ? `${m.color}22` : 'rgba(255,255,255,0.03)',
-                    color: 'var(--text-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                    transition: 'all 0.2s ease',
-                  }}>
-                    <Icon size={18} color={m.color} />
-                    <span style={{ fontSize: '0.72rem', fontWeight: 600 }}>{m.label}</span>
-                    <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', textAlign: 'center' }}>{m.desc}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <button onClick={handleTravel} disabled={processing}
-              className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', opacity: processing ? 0.6 : 1 }}>
-              {processing ? 'Iniciando viagem...' : '🗺️ Partir Agora'}
+            <button 
+              className="btn btn-primary"
+              disabled={timeLeft > 0 || processing}
+              onClick={handleArrive}
+              style={{ padding: '10px 20px', opacity: (timeLeft > 0 || processing) ? 0.5 : 1 }}
+            >
+              {timeLeft > 0 ? 'Viajando...' : (processing ? 'Aguarde...' : 'Desembarcar')}
             </button>
-          </motion.div>
-        )}
+          </div>
+        </motion.div>
+      )}
+
+      {selected && selected.id !== character?.current_location_id && !activeTravel && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+          className="glass" style={{ borderRadius: 14, padding: 20, marginBottom: 8 }}>
+          <div style={{ marginBottom: 14, fontFamily: 'Cinzel, serif', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Navigation size={16} /> Viajar para {selected.name}
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            {TRAVEL_MODES.map((m) => {
+              const Icon = m.icon;
+              return (
+                <button key={m.id} onClick={() => setTravelMode(m.id)} style={{
+                  flex: 1, padding: '12px 6px', borderRadius: 10, cursor: 'pointer',
+                  border: `2px solid ${travelMode === m.id ? m.color : 'rgba(255,255,255,0.08)'}`,
+                  background: travelMode === m.id ? `${m.color}22` : 'rgba(255,255,255,0.03)',
+                  color: 'var(--text-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                  transition: 'all 0.2s ease',
+                }}>
+                  <Icon size={20} color={m.color} />
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>{m.label}</span>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textAlign: 'center' }}>{m.desc}</span>
+                </button>
+              );
+            })}
+          </div>
+          <button onClick={handleTravel} disabled={processing}
+            className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', opacity: processing ? 0.6 : 1 }}>
+            {processing ? 'Iniciando viagem...' : '🗺️ Partir Agora'}
+          </button>
+        </motion.div>
+      )}
+
+      <div className="grid-layout">
+        {locations.map((loc) => {
+          const isCurrent = loc.id === character?.current_location_id;
+          const isSelected = selected?.id === loc.id;
+          return (
+            <motion.button key={loc.id}
+              whileTap={{ scale: 0.98 }}
+              disabled={isCurrent || !!activeTravel}
+              onClick={() => !isCurrent && setSelected(loc)}
+              style={{
+                padding: '16px', borderRadius: 12, textAlign: 'left', 
+                cursor: (isCurrent || !!activeTravel) ? 'default' : 'pointer',
+                background: isCurrent ? 'rgba(0,210,200,0.1)' : isSelected ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.03)',
+                border: `2px solid ${isCurrent ? 'rgba(0,210,200,0.4)' : isSelected ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.06)'}`,
+                width: '100%', color: 'var(--text-primary)',
+                transition: 'all 0.2s ease',
+                opacity: (activeTravel && !isCurrent) ? 0.4 : 1,
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span style={{ fontWeight: 600, fontFamily: 'Cinzel, serif', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <MapPin size={16} color={isCurrent ? "var(--accent)" : "var(--text-muted)"} />
+                  {loc.name}
+                </span>
+                {isCurrent && <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: 600 }}>● Sua Posição</span>}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5, marginLeft: 22 }}>{loc.description}</div>
+            </motion.button>
+          );
+        })}
       </div>
     </div>
   );

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Clock, Zap, Star } from 'lucide-react';
+import { Clock, Zap, Star } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
 
@@ -75,7 +74,7 @@ export default function MissionsPage() {
       if (data.error) throw new Error(data.error);
       
       setActiveMission(data.charMission);
-      await loadCharacter(user.id); // update stamina
+      await loadCharacter(user.id);
       showModal('Missão Iniciada', `Retorne em ${mission.duration_minutes} minutos para coletar as recompensas!`, 'info');
     } catch (err) {
       showModal('Erro', err.message, 'error');
@@ -84,6 +83,7 @@ export default function MissionsPage() {
     }
   };
 
+  // We keep the manual claim just in case auto-claim takes a few seconds to trigger
   const claimReward = async () => {
     if (!activeMission) return;
     setProcessing(true);
@@ -98,7 +98,7 @@ export default function MissionsPage() {
 
       showModal('Missão Concluída!', `Você ganhou ${data.rewards.xp} XP e ${data.rewards.ryo} Ryō.`, 'success');
       setActiveMission(null);
-      await loadCharacter(user.id); // update xp, ryo, level
+      await loadCharacter(user.id);
     } catch (err) {
       showModal('Erro', err.message, 'error');
     } finally {
@@ -107,81 +107,94 @@ export default function MissionsPage() {
   };
 
   return (
-    <div style={{ height: '100%', overflowY: 'auto', background: 'var(--bg-900)', padding: '20px' }}>
-      <div style={{ maxWidth: 640, margin: '0 auto', paddingBottom: 60 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-          <Link to="/dashboard" style={{ color: 'var(--text-muted)', display: 'flex' }}><ArrowLeft size={20} /></Link>
-          <div>
-            <h1 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.3rem' }}>Missões</h1>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{character?.locations?.name}</p>
-          </div>
-        </div>
-
-        {activeMission && (
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-            className="glass glow" style={{ borderRadius: 16, padding: 20, marginBottom: 24, border: '1px solid rgba(0,210,200,0.4)' }}>
-            <h3 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.1rem', marginBottom: 8, color: 'var(--accent)' }}>
-              Missão em Andamento
-            </h3>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: '2rem', fontWeight: 700, fontFamily: 'monospace' }}>
-                {formatTime(timeLeft)}
-              </div>
-              <button 
-                className="btn btn-primary"
-                disabled={timeLeft > 0 || processing}
-                onClick={claimReward}
-                style={{ padding: '10px 20px', opacity: (timeLeft > 0 || processing) ? 0.5 : 1 }}
-              >
-                {timeLeft > 0 ? 'Em Missão...' : (processing ? 'Aguarde...' : 'Resgatar')}
-              </button>
-            </div>
-          </motion.div>
-        )}
-
-        {loading ? (
-          <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: 40 }}>Procurando pergaminhos...</p>
-        ) : missions.length === 0 ? (
-          <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: 40 }}>Nenhuma missão disponível no seu rank.</p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <h3 style={{ fontFamily: 'Cinzel, serif', fontSize: '1rem', color: 'var(--text-secondary)' }}>Mural de Missões</h3>
-            {missions.map((m) => (
-              <motion.div key={m.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-                className="glass" style={{ borderRadius: 12, padding: 18, opacity: activeMission ? 0.5 : 1 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>{m.name}</span>
-                  <span style={{ fontSize: '0.72rem', padding: '2px 8px', borderRadius: 100,
-                    background: 'rgba(0,210,200,0.15)', color: 'var(--accent)', border: '1px solid rgba(0,210,200,0.3)' }}>
-                    Rank {m.rank.toUpperCase()}
-                  </span>
-                </div>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: 12, lineHeight: 1.5 }}>{m.description}</p>
-                <div style={{ display: 'flex', gap: 14, marginBottom: 16 }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Zap size={12} color="#facc15" /> {m.stamina_cost}
-                  </span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Clock size={12} /> {m.duration_minutes}m
-                  </span>
-                  <span style={{ fontSize: '0.75rem', color: '#a855f7', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Star size={12} /> {m.xp_reward} XP
-                  </span>
-                  <span style={{ fontSize: '0.75rem', color: '#f59e0b' }}>💰 {m.ryo_reward}</span>
-                </div>
-                <button 
-                  onClick={() => startMission(m)} 
-                  className="btn btn-primary" 
-                  style={{ width: '100%', fontSize: '0.82rem', padding: '8px' }}
-                  disabled={!!activeMission || processing}
-                >
-                  {processing ? 'Aguarde...' : 'Aceitar Missão'}
-                </button>
-              </motion.div>
-            ))}
-          </div>
-        )}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div>
+        <h1 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.4rem', marginBottom: 8 }}>Quadro de Missões</h1>
+        <p style={{ color: 'var(--text-muted)' }}>Cumpra missões locais para ganhar experiência e Ryō.</p>
       </div>
+
+      {activeMission && (
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+          className="glass glow" style={{ borderRadius: 'var(--radius)', padding: 20, border: '1px solid rgba(168, 85, 247, 0.4)' }}>
+          <h3 style={{ fontFamily: 'Cinzel, serif', fontSize: '1.1rem', marginBottom: 8, color: 'var(--accent)' }}>
+            Missão em Andamento
+          </h3>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: 16 }}>
+            Continue suas tarefas no mundo enquanto aguarda. Você pode resgatar a recompensa quando o tempo acabar.
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ fontSize: '2rem', fontWeight: 700, fontFamily: 'monospace' }}>
+              {formatTime(timeLeft)}
+            </div>
+            <button 
+              className="btn btn-primary"
+              disabled={timeLeft > 0 || processing}
+              onClick={claimReward}
+              style={{ padding: '10px 20px', opacity: (timeLeft > 0 || processing) ? 0.5 : 1 }}
+            >
+              {timeLeft > 0 ? 'Em Missão...' : (processing ? 'Aguarde...' : 'Resgatar')}
+            </button>
+          </div>
+        </motion.div>
+      )}
+
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Buscando missões...</div>
+      ) : (
+        <>
+          {missions.length === 0 ? (
+            <div className="glass" style={{ padding: 40, textAlign: 'center', borderRadius: 'var(--radius)' }}>
+              Nenhuma missão disponível no seu rank para esta localização.
+            </div>
+          ) : (
+            <div className="grid-layout">
+              {missions.map((m) => (
+                <motion.div key={m.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                  className="glass" style={{ borderRadius: 'var(--radius)', padding: 16, display: 'flex', flexDirection: 'column' }}>
+                  
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <span style={{ fontWeight: 600, fontFamily: 'Cinzel, serif' }}>{m.name}</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '2px 6px', background: 'rgba(255,255,255,0.1)', borderRadius: 4 }}>
+                      Rank {m.rank.toUpperCase()}
+                    </span>
+                  </div>
+                  
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 16, flex: 1 }}>{m.description}</p>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: 8, textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Tempo</div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                        <Clock size={12} color="var(--accent)" /> {m.duration_minutes}m
+                      </div>
+                    </div>
+                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: 8, textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Custo</div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                        <Zap size={12} color="#f59e0b" /> {m.stamina_cost}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, padding: '0 4px' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#a855f7' }}>+{m.xp_reward} XP</div>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#fbbf24' }}>+{m.ryo_reward} Ryō</div>
+                  </div>
+
+                  <button 
+                    onClick={() => startMission(m)} 
+                    className="btn btn-primary" 
+                    style={{ width: '100%', fontSize: '0.85rem' }}
+                    disabled={!!activeMission || processing}
+                  >
+                    {processing ? 'Aguarde...' : 'Aceitar Missão'}
+                  </button>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
