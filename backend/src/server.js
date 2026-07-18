@@ -10,6 +10,7 @@ import characterRoutes from './routes/character.js';
 import missionRoutes from './routes/missions.js';
 import travelRoutes from './routes/travel.js';
 import shopRoutes from './routes/shop.js';
+import publicRoutes from './routes/public.js';
 
 // Socket handlers
 import { registerCombatSocket } from './sockets/combat.socket.js';
@@ -29,6 +30,7 @@ fastify.register(characterRoutes, { prefix: '/api/character' });
 fastify.register(missionRoutes, { prefix: '/api/missions' });
 fastify.register(travelRoutes, { prefix: '/api/travel' });
 fastify.register(shopRoutes, { prefix: '/api/shop' });
+fastify.register(publicRoutes, { prefix: '/api/public' });
 
 // Health check (for Render keep-alive)
 fastify.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));

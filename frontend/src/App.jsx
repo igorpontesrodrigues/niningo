@@ -4,7 +4,7 @@ import { supabase } from './lib/supabase';
 import { useAuthStore } from './store/authStore';
 
 // Pages
-import LoginPage from './pages/Auth/LoginPage';
+import LandingPage from './pages/Auth/LandingPage';
 import AuthCallback from './pages/Auth/AuthCallback';
 import CharacterCreate from './pages/CharacterCreate/CharacterCreate';
 import Dashboard from './pages/Dashboard/Dashboard';
@@ -44,7 +44,7 @@ export default function App() {
     <>
       <GlobalModal />
       <Routes>
-      <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/dashboard" />} />
+      <Route path="/login" element={!user ? <LandingPage /> : <Navigate to="/dashboard" />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/create-character" element={
         <ProtectedRoute>
